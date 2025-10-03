@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Layout,
   Menu,
@@ -7,8 +7,9 @@ import {
   Dropdown,
   Avatar,
   Space,
-  MenuProps
+  Drawer
 } from 'antd';
+import type { MenuProps } from 'antd';
 import {
   DashboardOutlined,
   CarOutlined,
@@ -16,7 +17,8 @@ import {
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  TeamOutlined
+  TeamOutlined,
+  CalendarOutlined
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
@@ -30,9 +32,26 @@ interface AppLayoutProps {
 
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuthStore();
+
+  // Check for mobile screen size
+  useEffect(() => {
+    const checkScreenSize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (mobile) {
+        setCollapsed(true);
+      }
+    };
+
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
 
   const menuItems = [
     {
@@ -46,19 +65,30 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       label: 'Vehículos',
     },
     {
-      key: '/clients',
-      icon: <TeamOutlined />,
-      label: 'Clientes',
+      key: '/reservations',
+      icon: <CalendarOutlined />,
+      label: 'Reservas',
     },
   ];
 
   const handleMenuClick = ({ key }: { key: string }) => {
     navigate(key);
+    if (isMobile) {
+      setMobileDrawerOpen(false);
+    }
   };
 
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const toggleSidebar = () => {
+    if (isMobile) {
+      setMobileDrawerOpen(!mobileDrawerOpen);
+    } else {
+      setCollapsed(!collapsed);
+    }
   };
 
   const userMenuItems: MenuProps['items'] = [
@@ -78,74 +108,146 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     },
   ];
 
+  // Sidebar content component
+  const SidebarContent = ({ isCollapsed = false }: { isCollapsed?: boolean }) => (
+    <>
+      <div style={{
+        height: '64px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: isCollapsed ? 'center' : 'flex-start',
+        padding: isCollapsed ? '0' : '0 24px',
+        borderBottom: '1px solid #f0f0f0'
+      }}>
+        <CarOutlined style={{ fontSize: '24px', color: '#1890ff' }} />
+        {!isCollapsed && (
+          <Title level={4} style={{ margin: '0 0 0 12px', color: '#1890ff' }}>
+            CarRental
+          </Title>
+        )}
+      </div>
+      <Menu
+        mode="inline"
+        selectedKeys={[location.pathname]}
+        items={menuItems}
+        onClick={handleMenuClick}
+        style={{ border: 'none' }}
+      />
+    </>
+  );
+
   return (
-    <Layout style={{ minHeight: '100vh' }}>
-      <Sider
-        trigger={null}
-        collapsible
-        collapsed={collapsed}
-        style={{
-          background: '#fff',
-          boxShadow: '2px 0 8px rgba(0, 0, 0, 0.15)',
-        }}
+    <Layout style={{
+      minHeight: '100vh',
+      width: '100%',
+      overflow: 'hidden'
+    }}>
+      {/* Desktop Sidebar */}
+      {!isMobile && (
+        <Sider
+          trigger={null}
+          collapsible
+          collapsed={collapsed}
+          style={{
+            background: '#fff',
+            boxShadow: '2px 0 8px rgba(0, 0, 0, 0.15)',
+            height: '100vh',
+            position: 'fixed',
+            left: 0,
+            top: 0,
+            zIndex: 100,
+          }}
+          width={200}
+          collapsedWidth={80}
+          breakpoint="lg"
+          onBreakpoint={(broken) => {
+            if (broken) {
+              setCollapsed(true);
+            }
+          }}
+        >
+          <SidebarContent isCollapsed={collapsed} />
+        </Sider>
+      )}
+
+      {/* Mobile Drawer */}
+      <Drawer
+        title={
+          <Space>
+            <CarOutlined style={{ color: '#1890ff' }} />
+            <span style={{ color: '#1890ff' }}>CarRental</span>
+          </Space>
+        }
+        placement="left"
+        closable={true}
+        onClose={() => setMobileDrawerOpen(false)}
+        open={isMobile && mobileDrawerOpen}
+        bodyStyle={{ padding: 0 }}
+        width={280}
+        style={{ zIndex: 1000 }}
       >
-        <div style={{
-          height: '64px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: collapsed ? 'center' : 'flex-start',
-          padding: collapsed ? '0' : '0 24px',
-          borderBottom: '1px solid #f0f0f0'
-        }}>
-          <CarOutlined style={{ fontSize: '24px', color: '#1890ff' }} />
-          {!collapsed && (
-            <Title level={4} style={{ margin: '0 0 0 12px', color: '#1890ff' }}>
-              CarRental
-            </Title>
-          )}
-        </div>
+        <SidebarContent />
+      </Drawer>
 
-        <Menu
-          mode="inline"
-          selectedKeys={[location.pathname]}
-          items={menuItems}
-          onClick={handleMenuClick}
-          style={{ border: 'none' }}
-        />
-      </Sider>
-
-      <Layout>
+      <Layout style={{
+        marginLeft: !isMobile ? (collapsed ? 80 : 200) : 0,
+        width: !isMobile ? `calc(100% - ${collapsed ? 80 : 200}px)` : '100%',
+        minHeight: '100vh'
+      }}>
         <Header style={{
-          padding: '0 24px',
+          padding: isMobile ? '0 12px' : '0 24px',
           background: '#fff',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+          position: 'sticky',
+          top: 0,
+          zIndex: 10,
+          width: '100%',
+          height: 64,
         }}>
           <Button
             type="text"
             icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-            onClick={() => setCollapsed(!collapsed)}
-            style={{ fontSize: '16px', width: 64, height: 64 }}
+            onClick={toggleSidebar}
+            style={{
+              fontSize: '16px',
+              width: 48,
+              height: 48
+            }}
           />
 
           <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
             <Space style={{ cursor: 'pointer' }}>
-              <Avatar icon={<UserOutlined />} />
-              <span>{user?.username}</span>
+              <Avatar icon={<UserOutlined />} size={isMobile ? 'default' : 'large'} />
+              {!isMobile && (
+                <span style={{
+                  maxWidth: 150,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}>
+                  {user?.username}
+                </span>
+              )}
             </Space>
           </Dropdown>
         </Header>
 
         <Content style={{
-          margin: '24px',
-          padding: '24px',
+          margin: isMobile ? '8px' : '16px',
+          padding: isMobile ? '12px' : '20px',
           background: '#fff',
           borderRadius: '8px',
-          minHeight: 'calc(100vh - 112px)',
+          minHeight: 'calc(100vh - 80px)',
+          overflow: 'auto',
+          width: '100%',
+          maxWidth: '100%'
         }}>
-          {children}
+          <div className="responsive-container">
+            {children}
+          </div>
         </Content>
       </Layout>
     </Layout>

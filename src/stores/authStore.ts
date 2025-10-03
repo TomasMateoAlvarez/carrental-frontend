@@ -1,40 +1,66 @@
 import { create } from 'zustand';
 import { authAPI } from '../services/api';
-import type { AuthUser } from '../types';
+import type { AuthUser, LoginRequest, RegisterRequest } from '../types';
 
 interface AuthStore {
   user: AuthUser | null;
   isLoading: boolean;
-  login: (username: string, password: string) => Promise<boolean>;
+  login: (loginData: LoginRequest) => Promise<boolean>;
+  register: (registerData: RegisterRequest) => Promise<boolean>;
   logout: () => void;
   checkAuth: () => void;
+  initializeAuth: () => void;
 }
 
-export const useAuthStore = create<AuthStore>((set) => ({
+export const useAuthStore = create<AuthStore>((set, get) => ({
   user: null,
   isLoading: false,
 
-  login: async (username: string, password: string) => {
+  login: async (loginData: LoginRequest) => {
     set({ isLoading: true });
     try {
-      const success = await authAPI.login(username, password);
-      if (success) {
-        const user = {
-          username,
-          isAuthenticated: true
-        };
-        set({
-          user,
-          isLoading: false
-        });
-        localStorage.setItem('auth-user-store', JSON.stringify({ user }));
-        return true;
-      } else {
-        set({ user: null, isLoading: false });
-        return false;
-      }
+      const authResponse = await authAPI.login(loginData);
+      const user: AuthUser = {
+        userId: authResponse.userId,
+        username: authResponse.username,
+        email: authResponse.email,
+        firstName: authResponse.firstName,
+        lastName: authResponse.lastName,
+        fullName: authResponse.fullName,
+        roles: authResponse.roles,
+        permissions: authResponse.permissions,
+        isAuthenticated: true
+      };
+
+      set({ user, isLoading: false });
+      return true;
     } catch (error) {
       console.error('Login error:', error);
+      set({ user: null, isLoading: false });
+      return false;
+    }
+  },
+
+  register: async (registerData: RegisterRequest) => {
+    set({ isLoading: true });
+    try {
+      const authResponse = await authAPI.register(registerData);
+      const user: AuthUser = {
+        userId: authResponse.userId,
+        username: authResponse.username,
+        email: authResponse.email,
+        firstName: authResponse.firstName,
+        lastName: authResponse.lastName,
+        fullName: authResponse.fullName,
+        roles: authResponse.roles,
+        permissions: authResponse.permissions,
+        isAuthenticated: true
+      };
+
+      set({ user, isLoading: false });
+      return true;
+    } catch (error) {
+      console.error('Register error:', error);
       set({ user: null, isLoading: false });
       return false;
     }
@@ -43,37 +69,39 @@ export const useAuthStore = create<AuthStore>((set) => ({
   logout: () => {
     authAPI.logout();
     set({ user: null });
-    localStorage.removeItem('auth-user-store');
   },
 
   checkAuth: () => {
     try {
-      const storedAuth = localStorage.getItem('auth-user-store');
-      if (storedAuth) {
-        const parsed = JSON.parse(storedAuth);
-        if (parsed.user) {
-          set({ user: parsed.user });
-          return;
+      const token = localStorage.getItem('auth-token');
+      const userStr = localStorage.getItem('auth-user');
+
+      console.log('Auth check - Token exists:', !!token);
+      console.log('Auth check - User data exists:', !!userStr);
+
+      if (token && userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          set({ user: { ...user, isAuthenticated: true } });
+          console.log('Auth check - User restored:', user.username);
+        } catch (parseError) {
+          console.error('Auth check - Parse error:', parseError);
+          localStorage.removeItem('auth-user');
+          localStorage.removeItem('auth-token');
+          localStorage.removeItem('auth-refresh-token');
+          set({ user: null });
         }
-      }
-
-      const isAuthenticated = authAPI.isAuthenticated();
-      const currentUser = authAPI.getCurrentUser();
-
-      if (isAuthenticated && currentUser) {
-        const user = {
-          username: currentUser,
-          isAuthenticated: true
-        };
-        set({ user });
-        localStorage.setItem('auth-user-store', JSON.stringify({ user }));
       } else {
+        console.log('Auth check - No valid auth data found');
         set({ user: null });
-        localStorage.removeItem('auth-user-store');
       }
     } catch (error) {
       console.error('Auth check error:', error);
       set({ user: null });
     }
+  },
+
+  initializeAuth: () => {
+    get().checkAuth();
   }
 }));

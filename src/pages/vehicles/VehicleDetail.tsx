@@ -18,7 +18,8 @@ import {
 } from '@ant-design/icons';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Vehicle, VehicleStatus, VehicleStatusType } from '../../types';
+import type { Vehicle } from '../../types';
+import { VehicleStatus } from '../../types';
 
 const { Title, Text } = Typography;
 
@@ -28,7 +29,7 @@ interface VehicleDetailProps {
 
 const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicle }) => {
   // Status color mapping
-  const getStatusColor = (status: VehicleStatusType) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case VehicleStatus.AVAILABLE:
         return 'green';
@@ -46,7 +47,7 @@ const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicle }) => {
   };
 
   // Status display text
-  const getStatusText = (status: VehicleStatusType) => {
+  const getStatusText = (status: string) => {
     switch (status) {
       case VehicleStatus.AVAILABLE:
         return 'Disponible';
@@ -88,8 +89,8 @@ const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicle }) => {
       </div>
 
       {/* Status and Key Metrics */}
-      <Row gutter={16} style={{ marginBottom: '24px' }}>
-        <Col span={6}>
+      <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
+        <Col xs={12} sm={12} md={6}>
           <Card size="small">
             <Statistic
               title="Estado"
@@ -98,12 +99,13 @@ const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicle }) => {
               valueStyle={{
                 color: getStatusColor(vehicle.status) === 'green' ? '#3f8600' :
                        getStatusColor(vehicle.status) === 'red' ? '#cf1322' :
-                       getStatusColor(vehicle.status) === 'orange' ? '#d46b08' : '#1890ff'
+                       getStatusColor(vehicle.status) === 'orange' ? '#d46b08' : '#1890ff',
+                fontSize: window.innerWidth <= 576 ? '14px' : '24px'
               }}
             />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={12} sm={12} md={6}>
           <Card size="small">
             <Statistic
               title="Tarifa Diaria"
@@ -111,24 +113,33 @@ const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicle }) => {
               prefix={<DollarOutlined />}
               suffix="USD"
               precision={2}
+              valueStyle={{
+                fontSize: window.innerWidth <= 576 ? '14px' : '24px'
+              }}
             />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={12} sm={12} md={6}>
           <Card size="small">
             <Statistic
               title="Kilometraje"
               value={vehicle.mileage}
               suffix="km"
+              valueStyle={{
+                fontSize: window.innerWidth <= 576 ? '14px' : '24px'
+              }}
             />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={12} sm={12} md={6}>
           <Card size="small">
             <Statistic
               title="Asientos"
               value={vehicle.seats}
               suffix="personas"
+              valueStyle={{
+                fontSize: window.innerWidth <= 576 ? '14px' : '24px'
+              }}
             />
           </Card>
         </Col>
@@ -155,7 +166,11 @@ const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicle }) => {
 
       {/* Vehicle Information */}
       <Card title="Información del Vehículo" style={{ marginBottom: '16px' }}>
-        <Descriptions column={2} bordered size="small">
+        <Descriptions
+          column={{ xs: 1, sm: 1, md: 2 }}
+          bordered
+          size="small"
+        >
           <Descriptions.Item label="Matrícula">
             <Text strong>{vehicle.licensePlate}</Text>
           </Descriptions.Item>
@@ -211,7 +226,11 @@ const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicle }) => {
 
       {/* Maintenance Information */}
       <Card title="Información de Mantenimiento">
-        <Descriptions column={1} bordered size="small">
+        <Descriptions
+          column={{ xs: 1, sm: 1 }}
+          bordered
+          size="small"
+        >
           <Descriptions.Item label="Último Mantenimiento">
             <Space>
               <CalendarOutlined />
@@ -237,7 +256,11 @@ const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicle }) => {
 
       {/* Timestamps */}
       <Card title="Información del Sistema" style={{ marginTop: '16px' }}>
-        <Descriptions column={1} bordered size="small">
+        <Descriptions
+          column={{ xs: 1, sm: 1 }}
+          bordered
+          size="small"
+        >
           <Descriptions.Item label="Fecha de Creación">
             {formatDate(vehicle.createdAt)}
           </Descriptions.Item>

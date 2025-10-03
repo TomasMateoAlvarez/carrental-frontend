@@ -12,7 +12,8 @@ import {
 } from 'antd';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { vehiclesAPI } from '../../services/api';
-import { Vehicle, VehicleRequest, VehicleStatus } from '../../types';
+import type { Vehicle, VehicleRequest } from '../../types';
+import { VehicleStatus } from '../../types';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -37,7 +38,18 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ vehicle, onSuccess }) => {
       onSuccess();
     },
     onError: (error: any) => {
-      const errorMessage = error.response?.data?.message || 'Error al crear el vehículo';
+      console.error('Create vehicle error:', error);
+      const errorData = error.response?.data;
+      let errorMessage = 'Error al crear el vehículo';
+
+      if (errorData?.message) {
+        errorMessage = errorData.message;
+      } else if (errorData?.error) {
+        errorMessage = errorData.error;
+      } else if (typeof errorData === 'string') {
+        errorMessage = errorData;
+      }
+
       message.error(errorMessage);
     },
   });
@@ -52,7 +64,18 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ vehicle, onSuccess }) => {
       onSuccess();
     },
     onError: (error: any) => {
-      const errorMessage = error.response?.data?.message || 'Error al actualizar el vehículo';
+      console.error('Update vehicle error:', error);
+      const errorData = error.response?.data;
+      let errorMessage = 'Error al actualizar el vehículo';
+
+      if (errorData?.message) {
+        errorMessage = errorData.message;
+      } else if (errorData?.error) {
+        errorMessage = errorData.error;
+      } else if (typeof errorData === 'string') {
+        errorMessage = errorData;
+      }
+
       message.error(errorMessage);
     },
   });
@@ -110,19 +133,20 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ vehicle, onSuccess }) => {
       }
     >
       <Row gutter={16}>
-        <Col span={12}>
+        <Col xs={24} sm={12}>
           <Form.Item
             name="licensePlate"
             label="Matrícula"
             rules={[
               { required: true, message: 'La matrícula es obligatoria' },
+              { min: 6, message: 'La matrícula debe tener al menos 6 caracteres' },
               { max: 20, message: 'La matrícula no puede exceder 20 caracteres' },
             ]}
           >
             <Input placeholder="Ej: ABC-123" />
           </Form.Item>
         </Col>
-        <Col span={12}>
+        <Col xs={24} sm={12}>
           <Form.Item
             name="year"
             label="Año"
@@ -143,7 +167,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ vehicle, onSuccess }) => {
       </Row>
 
       <Row gutter={16}>
-        <Col span={12}>
+        <Col xs={24} sm={12}>
           <Form.Item
             name="brand"
             label="Marca"
@@ -155,7 +179,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ vehicle, onSuccess }) => {
             <Input placeholder="Ej: Toyota" />
           </Form.Item>
         </Col>
-        <Col span={12}>
+        <Col xs={24} sm={12}>
           <Form.Item
             name="model"
             label="Modelo"
@@ -170,7 +194,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ vehicle, onSuccess }) => {
       </Row>
 
       <Row gutter={16}>
-        <Col span={12}>
+        <Col xs={24} sm={12}>
           <Form.Item
             name="color"
             label="Color"
@@ -181,7 +205,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ vehicle, onSuccess }) => {
             <Input placeholder="Ej: Blanco" />
           </Form.Item>
         </Col>
-        <Col span={12}>
+        <Col xs={24} sm={12}>
           <Form.Item
             name="category"
             label="Categoría"
@@ -205,8 +229,8 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ vehicle, onSuccess }) => {
         </Col>
       </Row>
 
-      <Row gutter={16}>
-        <Col span={8}>
+      <Row gutter={[16, 8]}>
+        <Col xs={24} sm={12} md={8}>
           <Form.Item
             name="seats"
             label="Asientos"
@@ -224,7 +248,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ vehicle, onSuccess }) => {
             />
           </Form.Item>
         </Col>
-        <Col span={8}>
+        <Col xs={24} sm={12} md={8}>
           <Form.Item
             name="mileage"
             label="Kilometraje"
@@ -241,7 +265,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ vehicle, onSuccess }) => {
             />
           </Form.Item>
         </Col>
-        <Col span={8}>
+        <Col xs={24} sm={12} md={8}>
           <Form.Item
             name="dailyRate"
             label="Tarifa Diaria"
@@ -262,7 +286,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ vehicle, onSuccess }) => {
       </Row>
 
       <Row gutter={16}>
-        <Col span={12}>
+        <Col xs={24} sm={12}>
           <Form.Item
             name="transmission"
             label="Transmisión"
@@ -278,7 +302,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ vehicle, onSuccess }) => {
             </Select>
           </Form.Item>
         </Col>
-        <Col span={12}>
+        <Col xs={24} sm={12}>
           <Form.Item
             name="fuelType"
             label="Tipo de Combustible"
@@ -314,19 +338,28 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ vehicle, onSuccess }) => {
       </Form.Item>
 
       <Form.Item style={{ marginTop: '24px' }}>
-        <Space>
-          <Button
-            type="primary"
-            htmlType="submit"
-            loading={isLoading}
-            size="large"
-          >
-            {isEditing ? 'Actualizar' : 'Crear'} Vehículo
-          </Button>
-          <Button size="large" onClick={onSuccess}>
-            Cancelar
-          </Button>
-        </Space>
+        <Row gutter={[8, 8]}>
+          <Col xs={24} sm={12}>
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={isLoading}
+              size="large"
+              style={{ width: '100%' }}
+            >
+              {isEditing ? 'Actualizar' : 'Crear'} Vehículo
+            </Button>
+          </Col>
+          <Col xs={24} sm={12}>
+            <Button
+              size="large"
+              onClick={onSuccess}
+              style={{ width: '100%' }}
+            >
+              Cancelar
+            </Button>
+          </Col>
+        </Row>
       </Form.Item>
     </Form>
   );

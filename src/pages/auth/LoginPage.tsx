@@ -18,7 +18,10 @@ const LoginPage: React.FC = () => {
 
   const onFinish = async (values: LoginForm) => {
     try {
-      const success = await login(values.username, values.password);
+      const success = await login({
+        username: values.username,
+        password: values.password
+      });
       if (success) {
         message.success('¡Inicio de sesión exitoso!');
         navigate('/dashboard');
