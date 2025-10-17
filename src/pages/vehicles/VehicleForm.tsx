@@ -9,11 +9,59 @@ import {
   Col,
   message,
   Space,
+  Typography,
 } from 'antd';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { vehiclesAPI } from '../../services/api';
-import type { Vehicle, VehicleRequest } from '../../types';
-import { VehicleStatus } from '../../types';
+import { usePermissions } from '../../hooks/usePermissions';
+
+// Inline types to bypass import issues
+interface Vehicle {
+  id: number;
+  licensePlate: string;
+  brand: string;
+  model: string;
+  year: number;
+  color: string;
+  mileage: number;
+  status: string;
+  statusDescription: string;
+  dailyRate: number;
+  category: string;
+  seats: number;
+  transmission: string;
+  fuelType: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+  lastMaintenanceDate?: string;
+  nextMaintenanceDate?: string;
+  needsMaintenance: boolean;
+  availableForRental: boolean;
+}
+
+interface VehicleRequest {
+  licensePlate: string;
+  brand: string;
+  model: string;
+  year: number;
+  color: string;
+  mileage: number;
+  status: string;
+  dailyRate: number;
+  category: string;
+  seats: number;
+  transmission: string;
+  fuelType: string;
+  description?: string;
+}
+
+enum VehicleStatus {
+  AVAILABLE = 'AVAILABLE',
+  RENTED = 'RENTED',
+  MAINTENANCE = 'MAINTENANCE',
+  OUT_OF_SERVICE = 'OUT_OF_SERVICE'
+}
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -26,8 +74,10 @@ interface VehicleFormProps {
 const VehicleForm: React.FC<VehicleFormProps> = ({ vehicle, onSuccess }) => {
   const [form] = Form.useForm();
   const queryClient = useQueryClient();
+  const { isEmployeeRestricted, canFullyEditVehicle } = usePermissions();
 
   const isEditing = !!vehicle;
+  const isRestrictedEdit = isEditing && isEmployeeRestricted();
 
   // Create mutation
   const createMutation = useMutation({
@@ -88,6 +138,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ vehicle, onSuccess }) => {
       year: values.year,
       color: values.color,
       mileage: values.mileage,
+      status: values.status || 'AVAILABLE', // Default to AVAILABLE if not provided
       dailyRate: values.dailyRate,
       category: values.category,
       seats: values.seats,
@@ -104,6 +155,23 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ vehicle, onSuccess }) => {
   };
 
   const isLoading = createMutation.isPending || updateMutation.isPending;
+
+  // Show warning for restricted employees
+  if (isRestrictedEdit) {
+    return (
+      <div style={{ textAlign: 'center', padding: '40px' }}>
+        <Typography.Title level={4}>Acceso Restringido</Typography.Title>
+        <Typography.Text type="secondary">
+          Los empleados solo pueden cambiar el estado de los vehículos desde la tabla principal.
+          <br />
+          No pueden editar otros detalles del vehículo.
+        </Typography.Text>
+        <div style={{ marginTop: '20px' }}>
+          <Button onClick={onSuccess}>Cerrar</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Form
@@ -125,10 +193,12 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ vehicle, onSuccess }) => {
               transmission: vehicle.transmission,
               fuelType: vehicle.fuelType,
               description: vehicle.description,
+              status: vehicle.status,
             }
           : {
               seats: 5,
               mileage: 0,
+              status: 'AVAILABLE',
             }
       }
     >
@@ -143,7 +213,10 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ vehicle, onSuccess }) => {
               { max: 20, message: 'La matrícula no puede exceder 20 caracteres' },
             ]}
           >
-            <Input placeholder="Ej: ABC-123" />
+            <Input
+              placeholder="Ej: ABC-123"
+              disabled={isRestrictedEdit}
+            />
           </Form.Item>
         </Col>
         <Col xs={24} sm={12}>
@@ -161,6 +234,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ vehicle, onSuccess }) => {
               placeholder="2020"
               min={1900}
               max={new Date().getFullYear() + 1}
+              disabled={isRestrictedEdit}
             />
           </Form.Item>
         </Col>
@@ -176,7 +250,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ vehicle, onSuccess }) => {
               { max: 50, message: 'La marca no puede exceder 50 caracteres' },
             ]}
           >
-            <Input placeholder="Ej: Toyota" />
+            <Input placeholder="Ej: Toyota" disabled={isRestrictedEdit} />
           </Form.Item>
         </Col>
         <Col xs={24} sm={12}>
@@ -188,7 +262,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ vehicle, onSuccess }) => {
               { max: 50, message: 'El modelo no puede exceder 50 caracteres' },
             ]}
           >
-            <Input placeholder="Ej: Corolla" />
+            <Input placeholder="Ej: Corolla" disabled={isRestrictedEdit} />
           </Form.Item>
         </Col>
       </Row>
@@ -202,7 +276,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ vehicle, onSuccess }) => {
               { max: 30, message: 'El color no puede exceder 30 caracteres' },
             ]}
           >
-            <Input placeholder="Ej: Blanco" />
+            <Input placeholder="Ej: Blanco" disabled={isRestrictedEdit} />
           </Form.Item>
         </Col>
         <Col xs={24} sm={12}>
@@ -262,6 +336,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ vehicle, onSuccess }) => {
               min={0}
               placeholder="50000"
               addonAfter="km"
+              disabled={isRestrictedEdit}
             />
           </Form.Item>
         </Col>
@@ -280,6 +355,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ vehicle, onSuccess }) => {
               precision={2}
               placeholder="50.00"
               addonBefore="$"
+              disabled={isRestrictedEdit}
             />
           </Form.Item>
         </Col>
@@ -317,6 +393,28 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ vehicle, onSuccess }) => {
               <Option value="Eléctrico">Eléctrico</Option>
               <Option value="GLP">GLP</Option>
               <Option value="GNC">GNC</Option>
+            </Select>
+          </Form.Item>
+        </Col>
+      </Row>
+
+      <Row gutter={16}>
+        <Col xs={24} sm={12}>
+          <Form.Item
+            name="status"
+            label="Estado"
+            rules={[
+              { required: true, message: 'El estado es obligatorio' },
+            ]}
+          >
+            <Select
+              placeholder="Selecciona el estado del vehículo"
+              disabled={isEditing && isEmployeeRestricted()}
+            >
+              <Option value="AVAILABLE">Disponible</Option>
+              <Option value="RENTED">Alquilado</Option>
+              <Option value="MAINTENANCE">En Mantenimiento</Option>
+              <Option value="OUT_OF_SERVICE">Fuera de Servicio</Option>
             </Select>
           </Form.Item>
         </Col>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Descriptions,
   Tag,
@@ -9,17 +9,54 @@ import {
   Col,
   Statistic,
   Divider,
+  Tabs,
 } from 'antd';
 import {
   CarOutlined,
   CalendarOutlined,
   DollarOutlined,
   ToolOutlined,
+  CameraOutlined,
+  SettingOutlined,
 } from '@ant-design/icons';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import type { Vehicle } from '../../types';
-import { VehicleStatus } from '../../types';
+import { VehiclePhotoUpload } from '../../components/vehicle/VehiclePhotoUpload';
+
+// Inline types to bypass import issues
+interface Vehicle {
+  id: number;
+  licensePlate: string;
+  brand: string;
+  model: string;
+  year: number;
+  color: string;
+  mileage: number;
+  status: string;
+  statusDescription: string;
+  dailyRate: number;
+  category: string;
+  seats: number;
+  transmission: string;
+  fuelType: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+  lastMaintenanceDate?: string;
+  nextMaintenanceDate?: string;
+  needsMaintenance: boolean;
+  availableForRental: boolean;
+}
+
+enum VehicleStatus {
+  AVAILABLE = 'AVAILABLE',
+  RENTED = 'RENTED',
+  MAINTENANCE = 'MAINTENANCE',
+  OUT_OF_SERVICE = 'OUT_OF_SERVICE'
+}
+import { MaintenanceDashboard } from '../../components/maintenance/MaintenanceDashboard';
+import { usePermissions } from '../../hooks/usePermissions';
+import { PermissionGuard } from '../../components/ui/PermissionGuard';
 
 const { Title, Text } = Typography;
 
@@ -28,6 +65,8 @@ interface VehicleDetailProps {
 }
 
 const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicle }) => {
+  const [activeTab, setActiveTab] = useState('details');
+  const { canUploadPhotos, canManageMaintenance } = usePermissions();
   // Status color mapping
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -224,51 +263,124 @@ const VehicleDetail: React.FC<VehicleDetailProps> = ({ vehicle }) => {
         )}
       </Card>
 
-      {/* Maintenance Information */}
-      <Card title="Información de Mantenimiento">
-        <Descriptions
-          column={{ xs: 1, sm: 1 }}
-          bordered
-          size="small"
-        >
-          <Descriptions.Item label="Último Mantenimiento">
-            <Space>
-              <CalendarOutlined />
-              {formatDate(vehicle.lastMaintenanceDate)}
-            </Space>
-          </Descriptions.Item>
-          <Descriptions.Item label="Próximo Mantenimiento">
-            <Space>
-              <CalendarOutlined />
-              <Text style={{
-                color: needsMaintenance ? '#ff4d4f' : 'inherit',
-                fontWeight: needsMaintenance ? 'bold' : 'normal'
-              }}>
-                {formatDate(vehicle.nextMaintenanceDate)}
-              </Text>
-              {needsMaintenance && (
-                <Tag color="red">¡Vencido!</Tag>
-              )}
-            </Space>
-          </Descriptions.Item>
-        </Descriptions>
-      </Card>
+      {/* Tabbed interface for detailed view */}
+      <Tabs
+        activeKey={activeTab}
+        onChange={setActiveTab}
+        items={[
+          {
+            key: 'details',
+            label: (
+              <Space>
+                <CarOutlined />
+                Detalles
+              </Space>
+            ),
+            children: (
+              <div>
+                {/* Maintenance Information */}
+                <Card title="Información de Mantenimiento" style={{ marginBottom: '16px' }}>
+                  <Descriptions
+                    column={{ xs: 1, sm: 1 }}
+                    bordered
+                    size="small"
+                  >
+                    <Descriptions.Item label="Último Mantenimiento">
+                      <Space>
+                        <CalendarOutlined />
+                        {formatDate(vehicle.lastMaintenanceDate)}
+                      </Space>
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Próximo Mantenimiento">
+                      <Space>
+                        <CalendarOutlined />
+                        <Text style={{
+                          color: needsMaintenance ? '#ff4d4f' : 'inherit',
+                          fontWeight: needsMaintenance ? 'bold' : 'normal'
+                        }}>
+                          {formatDate(vehicle.nextMaintenanceDate)}
+                        </Text>
+                        {needsMaintenance && (
+                          <Tag color="red">¡Vencido!</Tag>
+                        )}
+                      </Space>
+                    </Descriptions.Item>
+                  </Descriptions>
+                </Card>
 
-      {/* Timestamps */}
-      <Card title="Información del Sistema" style={{ marginTop: '16px' }}>
-        <Descriptions
-          column={{ xs: 1, sm: 1 }}
-          bordered
-          size="small"
-        >
-          <Descriptions.Item label="Fecha de Creación">
-            {formatDate(vehicle.createdAt)}
-          </Descriptions.Item>
-          <Descriptions.Item label="Última Actualización">
-            {formatDate(vehicle.updatedAt)}
-          </Descriptions.Item>
-        </Descriptions>
-      </Card>
+                {/* Timestamps */}
+                <Card title="Información del Sistema">
+                  <Descriptions
+                    column={{ xs: 1, sm: 1 }}
+                    bordered
+                    size="small"
+                  >
+                    <Descriptions.Item label="Fecha de Creación">
+                      {formatDate(vehicle.createdAt)}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Última Actualización">
+                      {formatDate(vehicle.updatedAt)}
+                    </Descriptions.Item>
+                  </Descriptions>
+                </Card>
+              </div>
+            ),
+          },
+          {
+            key: 'photos',
+            label: (
+              <Space>
+                <CameraOutlined />
+                Fotos
+              </Space>
+            ),
+            children: (
+              <PermissionGuard
+                permission="VEHICLE_PHOTO_UPLOAD"
+                fallback={
+                  <Card>
+                    <div style={{ textAlign: 'center', padding: '40px' }}>
+                      <Typography.Text type="secondary">
+                        No tienes permisos para ver las fotos del vehículo.
+                      </Typography.Text>
+                    </div>
+                  </Card>
+                }
+              >
+                <VehiclePhotoUpload
+                  vehicleId={vehicle.id}
+                  vehicleName={`${vehicle.brand} ${vehicle.model}`}
+                />
+              </PermissionGuard>
+            ),
+          },
+          {
+            key: 'maintenance',
+            label: (
+              <Space>
+                <SettingOutlined />
+                Mantenimiento
+              </Space>
+            ),
+            children: (
+              <PermissionGuard
+                permission="MAINTENANCE_RECORD_MANAGE"
+                fallback={
+                  <Card>
+                    <div style={{ textAlign: 'center', padding: '40px' }}>
+                      <Typography.Text type="secondary">
+                        No tienes permisos para gestionar el mantenimiento.
+                      </Typography.Text>
+                    </div>
+                  </Card>
+                }
+              >
+                <MaintenanceDashboard vehicleId={vehicle.id} />
+              </PermissionGuard>
+            ),
+          },
+        ]}
+      />
     </div>
   );
 };

@@ -11,6 +11,8 @@ import VehiclesPage from './pages/vehicles/VehiclesPage';
 import ReservationsPage from './pages/reservations/ReservationsPage';
 import ProtectedRoute from './components/ui/ProtectedRoute';
 import AppLayout from './components/ui/AppLayout';
+import { MaintenanceDashboard } from './components/maintenance/MaintenanceDashboard';
+import { PermissionGuard } from './components/ui/PermissionGuard';
 import './App.css';
 
 const queryClient = new QueryClient({
@@ -47,6 +49,17 @@ function App() {
                       <Route path="/dashboard" element={<DashboardPage />} />
                       <Route path="/vehicles" element={<VehiclesPage />} />
                       <Route path="/reservations" element={<ReservationsPage />} />
+                      <Route
+                        path="/maintenance"
+                        element={
+                          <PermissionGuard
+                            permission="MAINTENANCE_RECORD_MANAGE"
+                            fallback={<Navigate to="/dashboard" replace />}
+                          >
+                            <MaintenanceDashboard />
+                          </PermissionGuard>
+                        }
+                      />
                     </Routes>
                   </AppLayout>
                 </ProtectedRoute>

@@ -8,14 +8,19 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { user, checkAuth, isLoading } = useAuthStore();
+  const { user, checkAuth, isLoading, isInitialized } = useAuthStore();
   const location = useLocation();
 
   useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+    // Check auth only if not initialized and no user is present
+    if (!isInitialized && !user) {
+      console.log('🔐 No user found, checking authentication...');
+      checkAuth();
+    }
+  }, [user, checkAuth, isInitialized]);
 
-  if (isLoading) {
+  // Show loading spinner while auth is being checked
+  if (isLoading || !isInitialized) {
     return (
       <div style={{
         display: 'flex',
@@ -28,11 +33,14 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     );
   }
 
+  // If no user after auth check, redirect to login
   if (!user || !user.isAuthenticated) {
-    // Redirect to login page with return url
+    console.log('🚫 User not authenticated, redirecting to login...');
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  // User is authenticated, render protected content
+  console.log('✅ User authenticated, rendering protected route for:', user.username);
   return <>{children}</>;
 };
 

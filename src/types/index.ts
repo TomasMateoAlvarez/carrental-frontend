@@ -101,6 +101,108 @@ export interface VehicleRequest {
   description?: string;
 }
 
+// Vehicle Photos Types
+export interface VehiclePhoto {
+  id: number;
+  vehicleId: number;
+  photoUrl: string;
+  photoType: string;
+  description?: string;
+  inspectionType?: string;
+  isPrimary: boolean;
+  takenAt: string;
+  takenByUserId?: number;
+  createdAt: string;
+}
+
+export enum PhotoType {
+  GENERAL = 'GENERAL',
+  EXTERIOR = 'EXTERIOR',
+  INTERIOR = 'INTERIOR',
+  ENGINE = 'ENGINE',
+  DAMAGE = 'DAMAGE'
+}
+
+export enum InspectionType {
+  PICKUP = 'PICKUP',
+  RETURN = 'RETURN',
+  MAINTENANCE = 'MAINTENANCE',
+  GENERAL = 'GENERAL'
+}
+
+// Maintenance Types
+export interface MaintenanceRecord {
+  id: number;
+  vehicleId: number;
+  maintenanceType: string;
+  description: string;
+  serviceProvider?: string;
+  reason?: string;
+  cost?: number;
+  mileageAtService: number;
+  nextServiceMileage?: number;
+  status: MaintenanceStatus;
+  serviceDate: string;
+  completionDate?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+  createdByUserId?: number;
+}
+
+export enum MaintenanceStatus {
+  SCHEDULED = 'SCHEDULED',
+  IN_PROGRESS = 'IN_PROGRESS',
+  COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED',
+  OVERDUE = 'OVERDUE'
+}
+
+export enum MaintenanceType {
+  ROUTINE = 'ROUTINE',
+  REPAIR = 'REPAIR',
+  INSPECTION = 'INSPECTION',
+  CLEANING = 'CLEANING',
+  OIL_CHANGE = 'OIL_CHANGE',
+  TIRE_CHANGE = 'TIRE_CHANGE',
+  BRAKE_SERVICE = 'BRAKE_SERVICE',
+  ENGINE_SERVICE = 'ENGINE_SERVICE'
+}
+
+// Notifications Types
+export interface Notification {
+  id: number;
+  userId: number;
+  type: string;
+  title: string;
+  message: string;
+  priority: NotificationPriority;
+  isRead: boolean;
+  readAt?: string;
+  relatedEntityType?: string;
+  relatedEntityId?: number;
+  actionUrl?: string;
+  expiresAt?: string;
+  createdAt: string;
+}
+
+export enum NotificationPriority {
+  LOW = 'LOW',
+  MEDIUM = 'MEDIUM',
+  HIGH = 'HIGH',
+  URGENT = 'URGENT'
+}
+
+export enum NotificationType {
+  MAINTENANCE_DUE = 'MAINTENANCE_DUE',
+  MAINTENANCE_COMPLETED = 'MAINTENANCE_COMPLETED',
+  RESERVATION_CONFIRMED = 'RESERVATION_CONFIRMED',
+  RESERVATION_CANCELLED = 'RESERVATION_CANCELLED',
+  VEHICLE_RETURNED = 'VEHICLE_RETURNED',
+  SYSTEM_ALERT = 'SYSTEM_ALERT',
+  INFO = 'INFO'
+}
+
 // Reservation Types
 export interface CreateReservationRequest {
   vehicleId: number;

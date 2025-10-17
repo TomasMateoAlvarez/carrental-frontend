@@ -18,10 +18,14 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   TeamOutlined,
-  CalendarOutlined
+  CalendarOutlined,
+  ToolOutlined,
+  BellOutlined
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
+import { usePermissions } from '../../hooks/usePermissions';
+import { NotificationCenter } from '../notifications/NotificationCenter';
 
 const { Header, Sider, Content } = Layout;
 const { Title } = Typography;
@@ -37,6 +41,13 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuthStore();
+  const {
+    canManageVehicles,
+    canManageReservations,
+    canManageMaintenance,
+    canViewDashboard,
+    isCustomer
+  } = usePermissions();
 
   // Check for mobile screen size
   useEffect(() => {
@@ -53,23 +64,29 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     return () => window.removeEventListener('resize', checkScreenSize);
   }, []);
 
+  // Build menu items based on user permissions
   const menuItems = [
-    {
+    canViewDashboard() && {
       key: '/dashboard',
       icon: <DashboardOutlined />,
       label: 'Dashboard',
     },
-    {
+    canManageVehicles() && {
       key: '/vehicles',
       icon: <CarOutlined />,
       label: 'Vehículos',
     },
-    {
+    canManageReservations() && {
       key: '/reservations',
       icon: <CalendarOutlined />,
       label: 'Reservas',
     },
-  ];
+    canManageMaintenance() && {
+      key: '/maintenance',
+      icon: <ToolOutlined />,
+      label: 'Mantenimiento',
+    },
+  ].filter(Boolean); // Remove null items
 
   const handleMenuClick = ({ key }: { key: string }) => {
     navigate(key);
@@ -218,21 +235,27 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             }}
           />
 
-          <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
-            <Space style={{ cursor: 'pointer' }}>
-              <Avatar icon={<UserOutlined />} size={isMobile ? 'default' : 'large'} />
-              {!isMobile && (
-                <span style={{
-                  maxWidth: 150,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap'
-                }}>
-                  {user?.username}
-                </span>
-              )}
-            </Space>
-          </Dropdown>
+          <Space size="middle">
+            {/* Notification Center */}
+            <NotificationCenter showAsDropdown={true} />
+
+            {/* User Menu */}
+            <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
+              <Space style={{ cursor: 'pointer' }}>
+                <Avatar icon={<UserOutlined />} size={isMobile ? 'default' : 'large'} />
+                {!isMobile && (
+                  <span style={{
+                    maxWidth: 150,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
+                  }}>
+                    {user?.username} ({user?.roles?.[0] || 'Usuario'})
+                  </span>
+                )}
+              </Space>
+            </Dropdown>
+          </Space>
         </Header>
 
         <Content style={{

@@ -27,8 +27,47 @@ import {
 } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { vehiclesAPI } from '../../services/api';
-import type { Vehicle } from '../../types';
-import { VEHICLE_STATUS, VehicleStatus } from '../../types';
+import { usePermissions } from '../../hooks/usePermissions';
+
+// Inline types to bypass import issues
+interface Vehicle {
+  id: number;
+  licensePlate: string;
+  brand: string;
+  model: string;
+  year: number;
+  color: string;
+  mileage: number;
+  status: string;
+  statusDescription: string;
+  dailyRate: number;
+  category: string;
+  seats: number;
+  transmission: string;
+  fuelType: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+  lastMaintenanceDate?: string;
+  nextMaintenanceDate?: string;
+  needsMaintenance: boolean;
+  availableForRental: boolean;
+}
+
+enum VehicleStatus {
+  AVAILABLE = 'AVAILABLE',
+  RENTED = 'RENTED',
+  MAINTENANCE = 'MAINTENANCE',
+  OUT_OF_SERVICE = 'OUT_OF_SERVICE'
+}
+
+const VEHICLE_STATUS = {
+  AVAILABLE: 'AVAILABLE',
+  RENTED: 'RENTED',
+  MAINTENANCE: 'MAINTENANCE',
+  OUT_OF_SERVICE: 'OUT_OF_SERVICE'
+};
+import { PermissionGuard } from '../../components/ui/PermissionGuard';
 import VehicleForm from './VehicleForm';
 import VehicleDetail from './VehicleDetail';
 
@@ -45,6 +84,13 @@ const VehiclesPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('');
 
   const queryClient = useQueryClient();
+  const {
+    canCreateVehicle,
+    canFullyEditVehicle,
+    canDeleteVehicle,
+    canChangeVehicleStatus,
+    isEmployeeRestricted
+  } = usePermissions();
 
   const { data: vehicles = [], isLoading, error } = useQuery({
     queryKey: ['vehicles'],
@@ -206,19 +252,21 @@ const VehiclesPage: React.FC = () => {
             icon={<EyeOutlined />}
             onClick={() => handleView(record)}
           />
-          <Button
-            type="text"
-            size={isMobileView ? 'small' : 'middle'}
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
-          />
-          {!isMobileView && (
+          {canFullyEditVehicle() && (
+            <Button
+              type="text"
+              size={isMobileView ? 'small' : 'middle'}
+              icon={<EditOutlined />}
+              onClick={() => handleEdit(record)}
+            />
+          )}
+          {canChangeVehicleStatus() && !isMobileView && (
             <Dropdown
               menu={{
                 items: [
                   {
                     key: 'change-status',
-                    label: 'Cambiar Estado',
+                    label: isEmployeeRestricted() ? 'Cambiar Estado (Solo Estado)' : 'Cambiar Estado',
                     children: getStatusMenuItems(record)
                   }
                 ]
@@ -228,19 +276,21 @@ const VehiclesPage: React.FC = () => {
               <Button type="text" icon={<MoreOutlined />} />
             </Dropdown>
           )}
-          <Popconfirm
-            title="¿Eliminar?"
-            onConfirm={() => handleDelete(record.id)}
-            okText="Sí"
-            cancelText="No"
-          >
-            <Button
-              type="text"
-              size={isMobileView ? 'small' : 'middle'}
-              danger
-              icon={<DeleteOutlined />}
-            />
-          </Popconfirm>
+          {canDeleteVehicle() && (
+            <Popconfirm
+              title="¿Eliminar?"
+              onConfirm={() => handleDelete(record.id)}
+              okText="Sí"
+              cancelText="No"
+            >
+              <Button
+                type="text"
+                size={isMobileView ? 'small' : 'middle'}
+                danger
+                icon={<DeleteOutlined />}
+              />
+            </Popconfirm>
+          )}
         </Space>
       ),
     },
@@ -312,15 +362,31 @@ const VehiclesPage: React.FC = () => {
             </Space>
           </Col>
           <Col xs={24} sm={24} md={8} lg={6}>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={handleAdd}
-              style={{ width: '100%' }}
-              size="large"
+            <PermissionGuard
+              permission="VEHICLE_CREATE"
+              fallback={
+                isEmployeeRestricted() ? (
+                  <Button
+                    type="default"
+                    disabled
+                    style={{ width: '100%' }}
+                    size="large"
+                  >
+                    Sin permisos para crear
+                  </Button>
+                ) : null
+              }
             >
-              Agregar Vehículo
-            </Button>
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={handleAdd}
+                style={{ width: '100%' }}
+                size="large"
+              >
+                Agregar Vehículo
+              </Button>
+            </PermissionGuard>
           </Col>
         </Row>
       </Card>
