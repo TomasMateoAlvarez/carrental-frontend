@@ -79,15 +79,24 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
 
     try {
       setLoading(true);
+      // For now, just show empty notifications to prevent backend errors
+      // TODO: Fix backend notifications API
+      setNotifications([]);
+      setUnreadCount(0);
+
+      /* Temporarily disabled until backend API is fixed
       const [userNotifications, count] = await Promise.all([
         notificationsAPI.getUserNotifications(),
         notificationsAPI.getUnreadCount()
       ]);
       setNotifications(userNotifications);
       setUnreadCount(count);
+      */
     } catch (error) {
       console.error('Error loading notifications:', error);
-      message.error('Error al cargar las notificaciones');
+      // Don't show error message to avoid spam
+      setNotifications([]);
+      setUnreadCount(0);
     } finally {
       setLoading(false);
     }
@@ -96,10 +105,11 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
   useEffect(() => {
     loadNotifications();
 
-    // Poll for new notifications every 30 seconds
-    const interval = setInterval(loadNotifications, 30000);
-    return () => clearInterval(interval);
-  }, [canViewNotifications]);
+    // Temporarily disabled polling to prevent resource exhaustion
+    // TODO: Re-enable when backend notifications API is fixed
+    // const interval = setInterval(loadNotifications, 30000);
+    // return () => clearInterval(interval);
+  }, []); // Empty dependency array to run only once
 
   const handleMarkAsRead = async (notificationId: number) => {
     try {

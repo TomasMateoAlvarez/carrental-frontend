@@ -151,18 +151,6 @@ const DashboardPage: React.FC = () => {
         </Card>
       )}
 
-      <Card title="🎉 Sistema Funcionando" style={{ marginTop: '24px' }}>
-        <div style={{ textAlign: 'center', padding: '20px' }}>
-          <Title level={3}>¡Sistema CarRental con JWT activo!</Title>
-          <Space direction="vertical">
-            <Text>✅ Frontend React + TypeScript funcionando</Text>
-            <Text>✅ Backend Spring Boot conectado (puerto 8083)</Text>
-            <Text>✅ Autenticación JWT implementada</Text>
-            <Text>✅ Sistema de reservas activo</Text>
-            <Text>✅ Base de datos PostgreSQL conectada</Text>
-          </Space>
-        </div>
-      </Card>
     </div>
   );
 };

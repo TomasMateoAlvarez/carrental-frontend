@@ -395,14 +395,19 @@ export const maintenanceAPI = {
     cost: number,
     mileageAtService: number
   ): Promise<MaintenanceRecord> => {
-    const response = await api.post('/api/v1/maintenance/create', {
-      vehicleId,
-      maintenanceType,
-      description,
-      serviceProvider,
-      reason,
-      cost,
-      mileageAtService
+    const formData = new URLSearchParams();
+    formData.append('vehicleId', vehicleId.toString());
+    formData.append('maintenanceType', maintenanceType);
+    formData.append('description', description);
+    formData.append('serviceProvider', serviceProvider);
+    formData.append('reason', reason);
+    formData.append('cost', cost.toString());
+    formData.append('mileageAtService', mileageAtService.toString());
+
+    const response = await api.post('/api/v1/maintenance/create', formData, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
     });
     return response.data;
   },
@@ -414,12 +419,17 @@ export const maintenanceAPI = {
     scheduledDate: string,
     estimatedMileage: number
   ): Promise<MaintenanceRecord> => {
-    const response = await api.post('/api/v1/maintenance/schedule', {
-      vehicleId,
-      maintenanceType,
-      description,
-      scheduledDate,
-      estimatedMileage
+    const formData = new URLSearchParams();
+    formData.append('vehicleId', vehicleId.toString());
+    formData.append('maintenanceType', maintenanceType);
+    formData.append('description', description);
+    formData.append('scheduledDate', scheduledDate);
+    formData.append('estimatedMileage', estimatedMileage.toString());
+
+    const response = await api.post('/api/v1/maintenance/schedule', formData, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
     });
     return response.data;
   },

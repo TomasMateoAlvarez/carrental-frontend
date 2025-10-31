@@ -78,7 +78,6 @@ import dayjs from 'dayjs';
 const { Title, Text } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
-const { TabPane } = Tabs;
 
 export const MaintenanceDashboard: React.FC = () => {
   const { canManageMaintenance, isEmployeeRestricted } = usePermissions();
@@ -96,17 +95,22 @@ export const MaintenanceDashboard: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [userRecords, allVehicles, needingMaintenance] = await Promise.all([
-        maintenanceAPI.getUserRecords(),
+      // Load all data - backend is now working correctly
+      const [allVehicles, userMaintenanceRecords, vehiclesNeedingMaint] = await Promise.all([
         vehiclesAPI.getAll(),
+        maintenanceAPI.getUserRecords(),
         maintenanceAPI.getVehiclesNeedingMaintenance()
       ]);
-      setRecords(userRecords);
+
       setVehicles(allVehicles);
-      setVehiclesNeedingMaintenance(needingMaintenance);
+      setRecords(userMaintenanceRecords);
+      setVehiclesNeedingMaintenance(vehiclesNeedingMaint);
     } catch (error) {
       console.error('Error loading maintenance data:', error);
-      message.error('Error al cargar los datos de mantenimiento');
+      message.error('Error al cargar datos de mantenimiento');
+      setVehicles([]);
+      setRecords([]);
+      setVehiclesNeedingMaintenance([]);
     } finally {
       setLoading(false);
     }
@@ -323,6 +327,61 @@ export const MaintenanceDashboard: React.FC = () => {
   const overdueCount = records.filter(r => r.status === MaintenanceStatus.OVERDUE).length;
   const completedCount = records.filter(r => r.status === MaintenanceStatus.COMPLETED).length;
 
+  const tabItems = [
+    {
+      key: 'all',
+      label: `Todos (${records.length})`,
+      children: (
+        <Table
+          columns={columns}
+          dataSource={filteredRecords}
+          rowKey="id"
+          loading={loading}
+          pagination={{ pageSize: 10 }}
+        />
+      )
+    },
+    {
+      key: 'pending',
+      label: `Pendientes (${pendingCount})`,
+      children: (
+        <Table
+          columns={columns}
+          dataSource={filteredRecords}
+          rowKey="id"
+          loading={loading}
+          pagination={{ pageSize: 10 }}
+        />
+      )
+    },
+    {
+      key: 'completed',
+      label: `Completados (${completedCount})`,
+      children: (
+        <Table
+          columns={columns}
+          dataSource={filteredRecords}
+          rowKey="id"
+          loading={loading}
+          pagination={{ pageSize: 10 }}
+        />
+      )
+    },
+    {
+      key: 'overdue',
+      label: `Atrasados (${overdueCount})`,
+      children: (
+        <Table
+          columns={columns}
+          dataSource={filteredRecords}
+          rowKey="id"
+          loading={loading}
+          pagination={{ pageSize: 10 }}
+        />
+      )
+    }
+  ];
+
   if (!canManageMaintenance()) {
     return (
       <Alert
@@ -442,44 +501,11 @@ export const MaintenanceDashboard: React.FC = () => {
 
       {/* Records table with tabs */}
       <Card>
-        <Tabs activeKey={activeTab} onChange={setActiveTab}>
-          <TabPane tab={`Todos (${records.length})`} key="all">
-            <Table
-              columns={columns}
-              dataSource={filteredRecords}
-              rowKey="id"
-              loading={loading}
-              pagination={{ pageSize: 10 }}
-            />
-          </TabPane>
-          <TabPane tab={`Pendientes (${pendingCount})`} key="pending">
-            <Table
-              columns={columns}
-              dataSource={filteredRecords}
-              rowKey="id"
-              loading={loading}
-              pagination={{ pageSize: 10 }}
-            />
-          </TabPane>
-          <TabPane tab={`Completados (${completedCount})`} key="completed">
-            <Table
-              columns={columns}
-              dataSource={filteredRecords}
-              rowKey="id"
-              loading={loading}
-              pagination={{ pageSize: 10 }}
-            />
-          </TabPane>
-          <TabPane tab={`Atrasados (${overdueCount})`} key="overdue">
-            <Table
-              columns={columns}
-              dataSource={filteredRecords}
-              rowKey="id"
-              loading={loading}
-              pagination={{ pageSize: 10 }}
-            />
-          </TabPane>
-        </Tabs>
+        <Tabs
+          activeKey={activeTab}
+          onChange={setActiveTab}
+          items={tabItems}
+        />
       </Card>
 
       {/* Create Record Modal */}

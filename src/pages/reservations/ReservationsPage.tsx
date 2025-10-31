@@ -140,8 +140,33 @@ const ReservationsPage: React.FC = () => {
     }
   };
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = (values: any) => {
+    console.log('🚀 FORM SUBMITTED - handleSubmit called!');
+    console.log('📋 Form values received:', values);
+
+    // Basic validation: ensure dateRange exists
+    if (!values.dateRange || !Array.isArray(values.dateRange) || values.dateRange.length !== 2) {
+      message.error('Por favor selecciona las fechas de inicio y fin');
+      return;
+    }
+
     const [startDate, endDate] = values.dateRange;
+
+    // Ensure required fields are present
+    if (!values.vehicleId) {
+      message.error('Por favor selecciona un vehículo');
+      return;
+    }
+
+    if (!values.pickupLocation) {
+      message.error('Por favor especifica la ubicación de recogida');
+      return;
+    }
+
+    if (!values.returnLocation) {
+      message.error('Por favor especifica la ubicación de devolución');
+      return;
+    }
 
     // Additional validations
     const today = dayjs();
@@ -162,32 +187,17 @@ const ReservationsPage: React.FC = () => {
       return;
     }
 
-    // Check vehicle availability first
-    try {
-      const availability = await reservationsAPI.checkAvailability(
-        values.vehicleId,
-        startDate.format('YYYY-MM-DD'),
-        endDate.format('YYYY-MM-DD')
-      );
-
-      if (!availability.available) {
-        message.error('El vehículo seleccionado no está disponible para las fechas elegidas');
-        return;
-      }
-    } catch (error) {
-      console.error('Error checking availability:', error);
-      message.warning('No se pudo verificar la disponibilidad, continuando con la reserva...');
-    }
-
+    // Create reservation data directly (like VehicleForm pattern)
     const reservationData: CreateReservationRequest = {
       vehicleId: values.vehicleId,
       startDate: startDate.format('YYYY-MM-DD'),
       endDate: endDate.format('YYYY-MM-DD'),
       pickupLocation: values.pickupLocation,
       returnLocation: values.returnLocation,
-      specialRequests: values.specialRequests,
+      specialRequests: values.specialRequests || '', // Default to empty string if not provided
     };
 
+    console.log('Submitting reservation data:', reservationData);
     createMutation.mutate(reservationData);
   };
 
@@ -509,6 +519,10 @@ const ReservationsPage: React.FC = () => {
           form={form}
           layout="vertical"
           onFinish={handleSubmit}
+          onFinishFailed={(errorInfo) => {
+            console.log('❌ FORM VALIDATION FAILED:', errorInfo);
+            message.error('Por favor completa todos los campos requeridos');
+          }}
         >
           <Form.Item
             name="vehicleId"
@@ -580,6 +594,11 @@ const ReservationsPage: React.FC = () => {
               <Form.Item
                 name="pickupLocation"
                 label="Lugar de recogida"
+                rules={[
+                  { required: true, message: 'El lugar de recogida es obligatorio' },
+                  { min: 3, message: 'El lugar de recogida debe tener al menos 3 caracteres' },
+                  { max: 200, message: 'El lugar de recogida no puede exceder 200 caracteres' }
+                ]}
               >
                 <Input placeholder="Dirección de recogida" />
               </Form.Item>
@@ -588,6 +607,11 @@ const ReservationsPage: React.FC = () => {
               <Form.Item
                 name="returnLocation"
                 label="Lugar de devolución"
+                rules={[
+                  { required: true, message: 'El lugar de devolución es obligatorio' },
+                  { min: 3, message: 'El lugar de devolución debe tener al menos 3 caracteres' },
+                  { max: 200, message: 'El lugar de devolución no puede exceder 200 caracteres' }
+                ]}
               >
                 <Input placeholder="Dirección de devolución" />
               </Form.Item>
