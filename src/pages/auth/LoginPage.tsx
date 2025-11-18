@@ -115,11 +115,6 @@ const LoginPage: React.FC = () => {
           borderRadius: '8px',
           textAlign: 'center'
         }}>
-          <Text type="secondary" style={{ fontSize: '12px' }}>
-            <strong>Credenciales de prueba:</strong><br />
-            Usuario: admin<br />
-            Contraseña: admin123
-          </Text>
         </div>
       </Card>
     </div>
