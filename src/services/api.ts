@@ -12,7 +12,13 @@ import type {
   User,
   VehiclePhoto,
   MaintenanceRecord,
-  Notification
+  Notification,
+  Customer,
+  CustomerRequest,
+  CustomerResponse,
+  CustomerHistory,
+  CustomerStatus,
+  CustomerSegment
 } from '../types';
 
 // Base API configuration
@@ -551,6 +557,122 @@ export const notificationsAPI = {
 
   cleanupExpired: async (): Promise<void> => {
     await api.post('/api/v1/notifications/cleanup-expired');
+  }
+};
+
+// Customer API
+export const customerAPI = {
+  // Basic CRUD Operations
+  getAll: async (page = 0, size = 20, sortBy = 'createdAt', sortDir = 'desc'): Promise<CustomerResponse[]> => {
+    const response = await api.get(`/api/v1/customers?page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`);
+    return response.data;
+  },
+
+  getAllPaginated: async (page = 0, size = 20, sortBy = 'createdAt', sortDir = 'desc'): Promise<{ content: CustomerResponse[], totalElements: number, totalPages: number }> => {
+    const response = await api.get(`/api/v1/customers/paginated?page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`);
+    return response.data;
+  },
+
+  getById: async (id: number): Promise<CustomerResponse> => {
+    const response = await api.get(`/api/v1/customers/${id}`);
+    return response.data;
+  },
+
+  getByCode: async (customerCode: string): Promise<CustomerResponse> => {
+    const response = await api.get(`/api/v1/customers/code/${customerCode}`);
+    return response.data;
+  },
+
+  create: async (customer: CustomerRequest): Promise<CustomerResponse> => {
+    const response = await api.post('/api/v1/customers', customer);
+    return response.data;
+  },
+
+  update: async (id: number, customer: CustomerRequest): Promise<CustomerResponse> => {
+    const response = await api.put(`/api/v1/customers/${id}`, customer);
+    return response.data;
+  },
+
+  delete: async (id: number): Promise<void> => {
+    await api.delete(`/api/v1/customers/${id}`);
+  },
+
+  // Customer History and Analytics
+  getHistory: async (id: number): Promise<CustomerHistory> => {
+    const response = await api.get(`/api/v1/customers/${id}/history`);
+    return response.data;
+  },
+
+  updateStatistics: async (id: number): Promise<void> => {
+    await api.put(`/api/v1/customers/${id}/update-statistics`);
+  },
+
+  // Search and Filter Operations
+  search: async (searchTerm: string, page = 0, size = 20): Promise<{ content: CustomerResponse[], totalElements: number, totalPages: number }> => {
+    const response = await api.get(`/api/v1/customers/search?searchTerm=${encodeURIComponent(searchTerm)}&page=${page}&size=${size}`);
+    return response.data;
+  },
+
+  getByStatus: async (status: CustomerStatus): Promise<CustomerResponse[]> => {
+    const response = await api.get(`/api/v1/customers/status/${status}`);
+    return response.data;
+  },
+
+  getBySegment: async (segment: CustomerSegment): Promise<CustomerResponse[]> => {
+    const response = await api.get(`/api/v1/customers/segment/${segment}`);
+    return response.data;
+  },
+
+  getWithExpiringLicenses: async (daysAhead = 30): Promise<CustomerResponse[]> => {
+    const response = await api.get(`/api/v1/customers/expiring-licenses?daysAhead=${daysAhead}`);
+    return response.data;
+  },
+
+  getTopCustomers: async (criteria = 'spending', limit = 10): Promise<CustomerResponse[]> => {
+    const response = await api.get(`/api/v1/customers/top-customers?criteria=${criteria}&limit=${limit}`);
+    return response.data;
+  },
+
+  // Customer Analytics Endpoints
+  getSegmentAnalytics: async (): Promise<any> => {
+    const response = await api.get('/api/v1/customers/analytics/segments');
+    return response.data;
+  },
+
+  getSpendingAnalytics: async (): Promise<any> => {
+    const response = await api.get('/api/v1/customers/analytics/spending');
+    return response.data;
+  },
+
+  getActivityAnalytics: async (): Promise<any> => {
+    const response = await api.get('/api/v1/customers/analytics/activity');
+    return response.data;
+  },
+
+  // Utility Endpoints
+  validateEmailAvailability: async (email: string): Promise<boolean> => {
+    const response = await api.get(`/api/v1/customers/validate/email?email=${encodeURIComponent(email)}`);
+    return response.data;
+  },
+
+  validateLicenseAvailability: async (licenseNumber: string): Promise<boolean> => {
+    const response = await api.get(`/api/v1/customers/validate/license?licenseNumber=${encodeURIComponent(licenseNumber)}`);
+    return response.data;
+  },
+
+  // Customer Engagement Endpoints
+  sendNotification: async (id: number, message: string): Promise<string> => {
+    const response = await api.post(`/api/v1/customers/${id}/send-notification`, message, {
+      headers: {
+        'Content-Type': 'text/plain',
+      },
+    });
+    return response.data;
+  },
+
+  getEngagementScore: async (id: number): Promise<any> => {
+    const response = await api.get(`/api/v1/customers/${id}/engagement-score`);
+    return response.data;
   }
 };
 

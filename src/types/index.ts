@@ -206,6 +206,7 @@ export enum NotificationType {
 // Reservation Types
 export interface CreateReservationRequest {
   vehicleId: number;
+  customerId: number;
   startDate: string;
   endDate: string;
   pickupLocation?: string;
@@ -235,6 +236,11 @@ export interface ReservationResponse {
   userId: number;
   userFullName: string;
   userEmail: string;
+  customerId?: number;
+  customerCode?: string;
+  customerFullName?: string;
+  customerEmail?: string;
+  customerPhone?: string;
   rentalId?: number;
   rentalCode?: string;
   pickupDateTime?: string;
@@ -266,4 +272,172 @@ export interface User {
   createdAt: string;
   updatedAt: string;
   roles: string[];
+}
+
+// Customer Types
+export interface Customer {
+  id: number;
+  customerCode: string;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  dateOfBirth?: string;
+  gender?: string;
+  nationality?: string;
+  status: CustomerStatus;
+  segment: CustomerSegment;
+  preferredLanguage?: string;
+  // License information
+  licenseNumber: string;
+  licenseIssuedDate?: string;
+  licenseExpiryDate?: string;
+  licenseIssuingCountry?: string;
+  licenseClass?: string;
+  // Address information
+  streetAddress?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
+  // Emergency contact
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  emergencyContactRelationship?: string;
+  // Business analytics
+  totalReservations: number;
+  totalSpent: number;
+  averageRentalDays: number;
+  lastRentalDate?: string;
+  customerLifetimeValue: number;
+  // Audit information
+  createdAt: string;
+  updatedAt: string;
+  lastActivityDate?: string;
+  notes?: string;
+  preferredPickupLocation?: string;
+}
+
+export interface CustomerRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+  dateOfBirth?: string;
+  gender?: string;
+  nationality?: string;
+  preferredLanguage?: string;
+  licenseNumber: string;
+  licenseIssuedDate?: string;
+  licenseExpiryDate?: string;
+  licenseIssuingCountry?: string;
+  licenseClass?: string;
+  streetAddress?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  emergencyContactRelationship?: string;
+  notes?: string;
+  preferredPickupLocation?: string;
+}
+
+export interface CustomerResponse {
+  id: number;
+  customerCode: string;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  dateOfBirth?: string;
+  gender?: string;
+  nationality?: string;
+  status: CustomerStatus;
+  segment: CustomerSegment;
+  preferredLanguage?: string;
+  licenseNumber: string;
+  licenseIssuedDate?: string;
+  licenseExpiryDate?: string;
+  licenseIssuingCountry?: string;
+  licenseClass?: string;
+  streetAddress?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  emergencyContactRelationship?: string;
+  totalReservations: number;
+  totalSpent: number;
+  averageRentalDays: number;
+  lastRentalDate?: string;
+  customerLifetimeValue: number;
+  createdAt: string;
+  updatedAt: string;
+  lastActivityDate?: string;
+  notes?: string;
+  preferredPickupLocation?: string;
+  isLicenseExpiringSoon?: boolean;
+  daysSinceLastActivity?: number;
+  engagementScore?: number;
+}
+
+export interface CustomerHistory {
+  customerId: number;
+  customerCode: string;
+  customerName: string;
+  totalReservations: number;
+  totalSpent: number;
+  averageRentalDays: number;
+  lastRentalDate?: string;
+  customerLifetimeValue: number;
+  segment: CustomerSegment;
+  reservationHistory: ReservationSummary[];
+  reservationsThisYear: number;
+  reservationsThisMonth: number;
+  spentThisYear: number;
+  spentThisMonth: number;
+  favoriteVehicleCategory?: string;
+  mostUsedPickupLocation?: string;
+  averageReservationValue: number;
+  daysSinceLastRental: number;
+}
+
+export interface ReservationSummary {
+  id: number;
+  reservationCode: string;
+  startDate: string;
+  endDate: string;
+  totalDays: number;
+  totalAmount: number;
+  status: ReservationStatus;
+  vehicleBrand: string;
+  vehicleModel: string;
+  vehicleLicensePlate: string;
+  pickupLocation?: string;
+  returnLocation?: string;
+  createdAt: string;
+  confirmedAt?: string;
+  cancelledAt?: string;
+}
+
+export enum CustomerStatus {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+  SUSPENDED = 'SUSPENDED',
+  BLOCKED = 'BLOCKED',
+  PENDING_VERIFICATION = 'PENDING_VERIFICATION'
+}
+
+export enum CustomerSegment {
+  NEW = 'NEW',
+  REGULAR = 'REGULAR',
+  PREMIUM = 'PREMIUM',
+  VIP = 'VIP',
+  CORPORATE = 'CORPORATE'
 }

@@ -9,11 +9,11 @@ import RegisterPage from './pages/auth/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import VehiclesPage from './pages/vehicles/VehiclesPage';
 import ReservationsPage from './pages/reservations/ReservationsPage';
+import ClientsPage from './pages/clients/ClientsPage';
 import ProtectedRoute from './components/ui/ProtectedRoute';
 import AppLayout from './components/ui/AppLayout';
 import { MaintenanceDashboard } from './components/maintenance/MaintenanceDashboard';
 import { PermissionGuard } from './components/ui/PermissionGuard';
-import './App.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -49,6 +49,7 @@ function App() {
                       <Route path="/dashboard" element={<DashboardPage />} />
                       <Route path="/vehicles" element={<VehiclesPage />} />
                       <Route path="/reservations" element={<ReservationsPage />} />
+                      <Route path="/clients" element={<ClientsPage />} />
                       <Route
                         path="/maintenance"
                         element={
